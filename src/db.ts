@@ -2,9 +2,12 @@ import dotenv from "dotenv";
 import { Pool } from "pg";
 
 dotenv.config();
+// DATABASE_URL=postgresql://postgres:admin@12345@db.ixhrnehzthaukxdczxva.supabase.co:5432/postgres
+
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 // 🟢 Bootstrap schema
