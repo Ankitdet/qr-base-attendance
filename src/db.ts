@@ -17,12 +17,12 @@ async function initDB() {
     CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
     CREATE TABLE IF NOT EXISTS participants (
-      id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-      flatno VARCHAR(10) NOT NULL UNIQUE,
-      members INT NOT NULL CHECK (members > 0),
-      owner_name VARCHAR(100) NOT NULL,
-      mobile_no VARCHAR(15) NOT NULL
-    );
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    flatno VARCHAR(10) NOT NULL,
+    member_name VARCHAR(500) NOT NULL,
+    mobile_no VARCHAR(15) NOT NULL,
+    CONSTRAINT unique_flat_member UNIQUE (flatno, member_name)
+);
 
     CREATE TABLE IF NOT EXISTS events (
       id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -31,6 +31,8 @@ async function initDB() {
       end_date DATE NOT NULL,
       day INT NOT NULL,
       notes TEXT,
+      is_completed BOOLEAN NOT NULL DEFAULT false,
+      location VARCHAR(255),
       CHECK (end_date >= start_date)
     );
 
@@ -46,8 +48,7 @@ async function initDB() {
       event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
       participant_id UUID NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
       is_present BOOLEAN NOT NULL DEFAULT false,
-      scan_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      no_of_scanned INT NOT NULL DEFAULT 1
+      scanned_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
@@ -55,4 +56,3 @@ async function initDB() {
 }
 
 export { initDB, pool };
-

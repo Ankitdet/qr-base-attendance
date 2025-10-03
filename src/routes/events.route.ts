@@ -4,11 +4,26 @@ import moment from "moment";
 
 const router = Router();
 
+// delete event by id
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // mark is_completed true for the event
+    await pool.query("UPDATE events SET is_completed = true WHERE id = $1", [id]);
+
+    res.json({ msg: "Event deleted/completed" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
-    const { event_name, start_date, end_date, notes } = req.body;
+    const { event_name, start_date, end_date, notes, location } = req.body;
 
-    if (!event_name || !start_date || !end_date) {
+    if (!event_name || !start_date || !end_date || !location) {
       return res.status(400).json({ msg: "Missing required fields." });
     }
 
@@ -22,9 +37,9 @@ router.post("/", async (req, res) => {
     for (let i = 1; i <= diffDays; i++) {
       const currentDate = moment(start).add(i, "days").format("YYYY-MM-DD");
       const result = await pool.query(
-        `INSERT INTO events (event_name, start_date, end_date, notes, day)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [event_name, currentDate, currentDate, notes, i]
+        `INSERT INTO events (event_name, start_date, end_date, notes, day, location, is_completed)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [event_name, currentDate, currentDate, notes, i, location, false]
       );
       insertedEvents.push(result.rows[0]);
     }
