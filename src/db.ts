@@ -4,8 +4,7 @@ import { Pool } from "pg";
 dotenv.config();
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL ||
-    "postgresql://postgres:admin@12345@db.ixhrnehzthaukxdczxva.supabase.co:5432/postgres",
+  connectionString: process.env.DATABASE_URL
 });
 
 // 🟢 Bootstrap schema
