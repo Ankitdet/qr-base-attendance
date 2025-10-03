@@ -8,12 +8,18 @@ router.get("/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
-    const result = await pool.query(
+    // get participants from participants table and match who are assigned to the event
+    const participantIds = await pool.query(
       "SELECT participant_id FROM event_participants WHERE event_id = $1",
       [event_id]
     );
 
-    res.json({ event_id, participants: result.rows.map((row) => row.participant_id) });
+    const result = await pool.query(
+      "SELECT id, flatno, member_name FROM participants WHERE id = ANY($1)",
+      [participantIds.rows.map((row) => row.participant_id)]
+    );
+
+    res.json({ event_id, participants: result.rows });
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
@@ -92,7 +98,9 @@ router.post("/", async (req, res) => {
 
     await Promise.all(insertPromises);
 
-    res.status(201).json({ msg: `There are participants ${participant_ids.length} added to event` });
+    res.status(201).json({
+      msg: `There are participants ${participant_ids.length} added to event`,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");

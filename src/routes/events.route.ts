@@ -36,10 +36,27 @@ router.post("/", async (req, res) => {
 
     for (let i = 1; i <= diffDays; i++) {
       const currentDate = moment(start).add(i, "days").format("YYYY-MM-DD");
+      // add event_name with Day 01 02 format
+      const eventDay = i < 10 ? `0${i}` : i;
+      const fullEventName = `${event_name} - Day ${eventDay}`;
+
+      // add check for same event name and date
+      const eventCheck = await pool.query(
+        "SELECT id FROM events WHERE event_name = $1 AND start_date = $2",
+        [fullEventName, currentDate]
+      );
+
+      if (eventCheck.rows.length > 0) {
+        return res
+          .status(400)
+          .json({ msg: `Event ${fullEventName} already exists.` });
+      }
+
+      // Insert event
       const result = await pool.query(
         `INSERT INTO events (event_name, start_date, end_date, notes, day, location, is_completed)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [event_name, currentDate, currentDate, notes, i, location, false]
+        [fullEventName, currentDate, currentDate, notes, i, location, false]
       );
       insertedEvents.push(result.rows[0]);
     }
