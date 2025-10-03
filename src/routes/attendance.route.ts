@@ -62,10 +62,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// check attendance by how many participants are present in an event
-// also need to check how many participant added in event
-
-router.get("/:event_id", async (req, res) => {
+router.get("/overall/:event_id", async (req, res) => {
   try {
     const { event_id } = req.params;
 
@@ -95,9 +92,52 @@ router.get("/:event_id", async (req, res) => {
       data: {
         total_participants: total_participants,
         total_present: total_present,
-        remaining: total_participants - total_present,
+        remaining: (total_participants - total_present).toString(),
       },
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+router.get("/flatwise/:event_id", async (req, res) => {
+  try {
+    const { event_id } = req.params;
+
+    if (!event_id) {
+      return res.status(400).json({ msg: "Missing required fields" });
+    }
+
+    // need to fetch which flatno and member name present in event and who are absent
+    // group by present and absent
+    const attendance_details = await pool.query(
+      `SELECT p.flatno, p.member_name, a.is_present
+       FROM participants p
+       LEFT JOIN attendance a ON p.id = a.participant_id AND a.event_id = $1`,
+      [event_id]
+    );
+
+    if (attendance_details.rows.length === 0) {
+      return res.status(404).json({ msg: "No attendance details found" });
+    }
+
+    const present = attendance_details.rows.filter(
+      (row) => row.is_present
+    );
+    const absent = attendance_details.rows.filter(
+      (row) => !row.is_present
+    );
+
+    res.json({
+      msg: "Attendance details fetched",
+      data: {
+        present,
+        absent,
+      },
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Server Error");
